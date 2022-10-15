@@ -8,7 +8,6 @@ export default function actionButton(array, bot) {
         ctx.answerCbQuery();
         const userId = ctx.update.callback_query.from.id;
         const student = await Student.findOne({ id: userId });
-
         if (!student.group) {
           Student.findOneAndUpdate(
             {

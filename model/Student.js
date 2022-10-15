@@ -6,7 +6,7 @@ const StudentSchema = new Schema({
   id: Number,
   username: String,
   group: String,
-  fullname: String,
+  sabGroup: String,
 });
 
 export default mongoose.model('Student', StudentSchema);

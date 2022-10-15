@@ -6,28 +6,23 @@ import Student from './model/Student.js';
 
 import main from './mongoConnect.js';
 
-import SceneGenerator from './Scenes/SceneGenerator.js';
+import {
+  setGroupTeacher,
+  setGroupName,
+  setSubGroupName,
+  setTeacherUsername,
+} from './Scenes/setGroupTeacher.js';
+import chooseGroup from './Scenes/chooseGroup.js';
 import createNewStudent from './use/createNewStudent.js';
 import sendMessageToStudent from './use/sendMessageToStudent.js';
 
-const chooseGroup = SceneGenerator.GenChooseGroup();
-const createGroup = SceneGenerator.GenCreateGroup();
-const setGroupTeacher = SceneGenerator.GenSetGroupTeacher();
-const groupName = SceneGenerator.GenGroupName();
-const teacherUsername = SceneGenerator.GenTeacherUsername();
-
 const stage = new Scenes.Stage([
-  chooseGroup,
-  createGroup,
-  setGroupTeacher,
-  teacherUsername,
-  groupName,
+  chooseGroup(),
+  setGroupTeacher(),
+  setTeacherUsername(),
+  setGroupName(),
+  setSubGroupName(),
 ]);
-
-// new Admin({
-//   username: 'wwwtsch',
-// }).save();
-
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 main().catch((err) => console.log(err));
@@ -59,7 +54,7 @@ bot.start(async (ctx) => {
 Не вимикай сповіщення, щоб нічого не пропустити, адже тут буде лише важлива інформація 🤍
     `);
 
-    await ctx.scene.enter('chooseGroup');
+    ctx.scene.enter('chooseGroup');
   } catch (err) {
     if (err) console.log(err);
     ctx.reply(
@@ -78,7 +73,6 @@ bot.command('/createGroup', async (ctx) => {
 
   await ctx.scene.enter('createGroup');
 });
-
 bot.command('/setGroupTeacher', async (ctx) => {
   const username = ctx.message.from.username;
   const admin = await Admin.findOne({ username: username });
@@ -87,7 +81,7 @@ bot.command('/setGroupTeacher', async (ctx) => {
     return ctx.reply('Як ти дізнався про цю команду? 😳');
   }
 
-  await ctx.scene.enter('groupName');
+  await ctx.scene.enter('setGroupTeacher');
 });
 
 bot.on('text', async (ctx) => {
@@ -98,9 +92,7 @@ bot.on('text', async (ctx) => {
     if (admin) {
       sendMessageToStudent(ctx, admin.group);
     } else {
-      ctx.reply(
-        'Напиши своєму куратору 🤍'
-      );
+      ctx.reply('Напиши своєму куратору 🤍');
     }
   } catch (err) {
     if (err) console.log(err);
