@@ -1,8 +1,15 @@
 import Student from '../model/Student.js';
 
 export default async function createNewStudent(ctx) {
-  new Student({
-    id: ctx.message.from.id,
-    username: ctx.message.from.first_name,
-  }).save();
+  try {
+    new Student({
+      id: ctx.update.callback_query.from.id,
+      username: ctx.update.callback_query.from.first_name,
+    }).save();
+  } catch (err) {
+    if (err) console.log(err);
+    ctx.reply(
+      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
+    );
+  }
 }

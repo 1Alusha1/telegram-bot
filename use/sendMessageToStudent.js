@@ -1,31 +1,42 @@
-import Group from '../model/Group.js';
+import Groups from '../model/Groups.js';
 import Student from '../model/Student.js';
 
 export default async function sendMessageToStudent(ctx, adminGroup) {
-  const group = await Group.findOne({ groupName: adminGroup });
-  if (!group) {
-    return await ctx.reply('В вашій группі поки немає студентів');
-  }
+  try {
+    const groups = await Groups.findOne({
+      groupName: adminGroup.subGroup.length
+        ? adminGroup.subGroup
+        : adminGroup.group,
+    });
+    if (!groups) {
+      return await ctx.reply('В вашій групі поки немає студентів');
+    }
 
-  group.students.forEach((student) => {
-    ctx.telegram
-      .sendMessage(String(student.student.id), ctx.message.text)
-      .catch((err) => {
-        console.log(err);
-        Student.findOneAndDelete({ id: student.student.id }, (err) => {
-          if (err) console.log(err);
-        });
-        Group.findOneAndUpdate(
-          {
-            groupName: group.groupName,
-          },
-          { $pull: { students: student } },
-          { new: true },
-          (err) => {
+    groups.students.forEach((student) => {
+      ctx.telegram
+        .sendMessage(String(student.id), ctx.message.text)
+        .catch((err) => {
+          console.log(err);
+          Student.findOneAndDelete({ id: student.id }, (err) => {
             if (err) console.log(err);
-          }
-        );
-      });
-  });
-  ctx.reply('Повідомлення відправлене');
+          });
+          Groups.findOneAndUpdate(
+            {
+              groupName: groups.groupName,
+            },
+            { $pull: { students: student } },
+            { new: true },
+            (err) => {
+              if (err) console.log(err);
+            }
+          );
+        });
+    });
+    ctx.reply('Повідомлення відправлене');
+  } catch (err) {
+    if (err) console.log(err);
+    ctx.reply(
+      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
+    );
+  }
 }
