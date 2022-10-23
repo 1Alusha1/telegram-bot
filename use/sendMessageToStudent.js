@@ -11,20 +11,18 @@ export default async function sendMessageToStudent(ctx, adminGroup) {
     if (!groups) {
       return await ctx.reply('В вашій групі поки немає студентів');
     }
-
     groups.students.forEach((student) => {
       ctx.telegram
-        .sendMessage(String(student.id), ctx.message.text)
+        .sendMessage(String(student.student.id), ctx.message.text)
         .catch((err) => {
-          console.log(err);
-          Student.findOneAndDelete({ id: student.id }, (err) => {
+          Student.findOneAndDelete({ id: student.student.id }, (err) => {
             if (err) console.log(err);
           });
           Groups.findOneAndUpdate(
             {
               groupName: groups.groupName,
             },
-            { $pull: { students: student } },
+            { $pull: { students: student.student } },
             { new: true },
             (err) => {
               if (err) console.log(err);

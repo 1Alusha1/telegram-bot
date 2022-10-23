@@ -12,7 +12,7 @@ async function createStudentInGroup(groupName, ctx) {
       { groupName },
       {
         $push: {
-          students: { username, id, group: groupName },
+          students: { student: { username, id, group: groupName } },
         },
       },
       (err) => {
@@ -20,7 +20,7 @@ async function createStudentInGroup(groupName, ctx) {
       }
     );
     await ctx.reply(`Ти приєднався(-лась) до групи ${groupName}`);
-    await createNewStudent(ctx,groupName);
+    await createNewStudent(ctx, groupName);
     await ctx.scene.leave();
   } catch (err) {
     if (err) console.log(err);
@@ -32,6 +32,7 @@ async function createStudentInGroup(groupName, ctx) {
 
 async function addStudentToGroup(subGroups, bot) {
   try {
+    console.log(subGroups)
     if (subGroups.length) {
       subGroups.forEach((item) => {
         bot.action(item.groupName, async (ctx) => {

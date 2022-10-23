@@ -73,7 +73,7 @@ bot.command('/setGroupTeacher', async (ctx) => {
       return ctx.reply('Як ти дізнався про цю команду? 😳');
     }
     if (admin.username !== process.env.MAIN_ADMIN) {
-      return ctx.reply('Як ти дізнався про цю команду? 😳');
+    return ctx.reply('Як ти дізнався про цю команду? 😳');
     }
     await ctx.scene.enter('setGroupTeacher');
   } catch (err) {
