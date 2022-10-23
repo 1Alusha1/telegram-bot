@@ -32,7 +32,6 @@ async function createStudentInGroup(groupName, ctx) {
 
 async function addStudentToGroup(subGroups, bot) {
   try {
-    console.log(subGroups)
     if (subGroups.length) {
       subGroups.forEach((item) => {
         bot.action(item.groupName, async (ctx) => {
@@ -65,7 +64,7 @@ export default function actionButton(array, bot) {
         if (mainGroup.subGroup.length) {
           await ctx.replyWithHTML(
             '<b>Обери підгрупу:</b>',
-            Markup.inlineKeyboard([drowButtons(mainGroup.subGroup)])
+            Markup.inlineKeyboard(drowButtons(mainGroup.subGroup))
           );
           return addStudentToGroup(mainGroup.subGroup, bot);
         } else {

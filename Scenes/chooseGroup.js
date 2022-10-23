@@ -17,7 +17,7 @@ export default function chooseGroup() {
 
       await ctx.replyWithHTML(
         '<b>Обери свою групу:</b>',
-        Markup.inlineKeyboard([drowButtons(mainGroup)])
+        Markup.inlineKeyboard(drowButtons(mainGroup))
       );
       await actionButton(mainGroup, chooseGroup, ctx);
     });
@@ -35,11 +35,18 @@ export function drowButtons(array) {
   try {
     const arr = [];
     array.forEach((item) => {
-      arr.push(
-        Markup.button.callback(`${item.groupName}`, `${item.groupName}`)
-      );
+      arr.push([
+        Markup.button.callback(`${item.groupName}`, `${item.groupName}`),
+      ]);
     });
-    return arr;
+    return arr.sort((a, b) => {
+      if (a[0].text < b[0].text) {
+        return -1;
+      } else if (a[0].text > b[0].text) {
+        return 1;
+      }
+      return 0;
+    });
   } catch (err) {
     if (err) console.log(err);
     ctx.reply(

@@ -4,42 +4,49 @@ import Groups from '../model/Groups.js';
 import Admin from '../model/Admin.js';
 
 export default async function setAdminSubGroup(ctx, state) {
-  //створює запис в у моделі основних груп
-  await checksMainGroups(state);
+  try {
+    //створює запис в у моделі основних груп
+    await checksMainGroups(state);
 
-  // перевірка існуючих груп
-  await verificationOfCreatedGroups(state);
+    // перевірка існуючих груп
+    await verificationOfCreatedGroups(state);
 
-  // створює групу якщо її немає
-  const groups = await Groups.findOne({
-    groupName: state.subGroupName,
-  });
-  if (!groups) {
-    await new Groups({
+    // створює групу якщо її немає
+    const groups = await Groups.findOne({
       groupName: state.subGroupName,
-    }).save();
-  }
-  //ствоюрєм адміна підгрупи
-  const admin = await Admin.findOne({
-    username: state.teacherUsername,
-  });
-
-  if (!admin) {
-    new Admin({
+    });
+    if (!groups) {
+      await new Groups({
+        groupName: state.subGroupName,
+      }).save();
+    }
+    //ствоюрєм адміна підгрупи
+    const admin = await Admin.findOne({
       username: state.teacherUsername,
-      group: state.groupName,
-      subGroup: state.subGroupName,
-    }).save();
-  }
-  await ctx.reply(
-    `Викладач ${state.teacherUsername} закріпленний за групою ${state.groupName}
+    });
+
+    if (!admin) {
+      new Admin({
+        username: state.teacherUsername,
+        group: state.groupName,
+        subGroup: state.subGroupName,
+      }).save();
+    }
+    await ctx.reply(
+      `Викладач ${state.teacherUsername} закріпленний за групою ${state.groupName}
 та підгрупою ${state.subGroupName}
 Всі наступні повідомлння будуть відправлятися учням`
-  );
+    );
 
-  state.groupName = '';
-  state.teacherUsername = '';
-  state.subGroupName = '';
-  state.subGroup = false;
-  state.action = '';
+    state.groupName = '';
+    state.teacherUsername = '';
+    state.subGroupName = '';
+    state.subGroup = false;
+    state.action = '';
+  } catch (err) {
+    if (err) console.log(err);
+    ctx.reply(
+      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
+    );
+  }
 }
