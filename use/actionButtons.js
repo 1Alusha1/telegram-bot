@@ -20,7 +20,7 @@ async function createStudentInGroup(groupName, ctx) {
       }
     );
     await ctx.reply(`Ти приєднався(-лась) до групи ${groupName}`);
-    await createNewStudent(ctx);
+    await createNewStudent(ctx,groupName);
     await ctx.scene.leave();
   } catch (err) {
     if (err) console.log(err);
