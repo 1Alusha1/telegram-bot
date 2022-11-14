@@ -1,8 +1,9 @@
-import { Telegraf, Scenes, session } from 'telegraf';
+import { Telegraf, Scenes, session, Markup } from 'telegraf';
 import 'dotenv/config';
 
 import Admin from './model/Admin.js';
 import Student from './model/Student.js';
+import Groups from './model/Groups.js';
 
 import main from './mongoConnect.js';
 
@@ -12,8 +13,14 @@ import {
   setSubGroupName,
   setTeacherUsername,
 } from './Scenes/setGroupTeacher.js';
+import { createAdminOwnGroup } from './Scenes/createAdminOwnGroup.js';
+import { sendMessageToOwnGroup } from './Scenes/sendMessageToOwnGroup.js';
 import chooseGroup from './Scenes/chooseGroup.js';
+
 import sendMessageToStudent from './use/sendMessageToStudent.js';
+import writeIntoOwnGroup from './hears/writeIntoOwnGroup.js';
+
+import message from './message.js';
 
 const stage = new Scenes.Stage([
   chooseGroup(),
@@ -21,6 +28,8 @@ const stage = new Scenes.Stage([
   setTeacherUsername(),
   setGroupName(),
   setSubGroupName(),
+  createAdminOwnGroup(),
+  sendMessageToOwnGroup(),
 ]);
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -38,50 +47,65 @@ bot.start(async (ctx) => {
 
     if (admin) {
       if (admin.group.length && admin.subGroup.length) {
-        return ctx.reply(`
-  Привіт, ти викладач, за тобою закріпленна група: ${admin.group} під группа ${admin.subGroup}`);
+        return ctx.reply(message(admin.group, admin.subGroup).adminSubGroup);
       } else {
-        return ctx.reply(`
-          Привіт, ти викладач, за тобою закріпленна група: ${admin.group}
-        `);
+        console.log();
+        return ctx.reply(message(admin.group).adminGroup);
       }
     }
     if (student) {
-      return ctx.reply('Цю комнду досить визвати один раз 🤍');
+      return ctx.reply(message().stop);
     }
 
-    await ctx.reply(`
-    Привіт! 👋🏻
-Я — твій помічник у нагадуванні про вебінари та інші важливі події 👩🏼‍💻
-Не вимикай сповіщення, щоб нічого не пропустити, адже тут буде лише важлива інформація 🤍
-    `);
+    await ctx.reply(message().start);
 
     ctx.scene.enter('chooseGroup');
   } catch (err) {
     if (err) console.log(err);
-    ctx.reply(
-      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
-    );
+    ctx.reply(message().error);
   }
 });
 
-bot.command('/setGroupTeacher', async (ctx) => {
+bot.command('/admin', async (ctx) => {
+  const username = ctx.message.from.username;
+
+  const admin = await Admin.findOne({ username: username });
+  if (!admin) {
+    return ctx.reply(message().incorrectUser);
+  }
+
   try {
-    const username = ctx.message.from.username;
-    const admin = await Admin.findOne({ username: username });
-    if (!admin) {
-      return ctx.reply('Як ти дізнався про цю команду? 😳');
+    if (admin.username !== 'ellisiam') {
+      await ctx.reply(
+        'Доступні команди',
+        Markup.keyboard([['Написати у групу', 'Створити власну підгрупу']])
+          .oneTime()
+          .resize()
+      );
+    } else {
+      await ctx.reply(
+        'Доступні команди',
+        Markup.keyboard([['Створити групу адміна', 'Створити власну підгрупу']])
+          .oneTime()
+          .resize()
+      );
     }
-    if (admin.username !== process.env.MAIN_ADMIN) {
-    return ctx.reply('Як ти дізнався про цю команду? 😳');
-    }
-    await ctx.scene.enter('setGroupTeacher');
   } catch (err) {
     if (err) console.log(err);
-    ctx.reply(
-      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
-    );
+    ctx.reply(message().error);
   }
+});
+
+bot.hears('Створити групу адміна', async (ctx) => {
+  await ctx.scene.enter('setGroupTeacher');
+});
+
+bot.hears('Написати у групу', async (ctx) => {
+  writeIntoOwnGroup(bot, ctx);
+});
+
+bot.hears('Створити підгрупу', async (ctx) => {
+  ctx.scene.enter('createAdminOwnGroup');
 });
 
 bot.on('text', async (ctx) => {
@@ -90,15 +114,18 @@ bot.on('text', async (ctx) => {
     const admin = await Admin.findOne({ username });
 
     if (admin) {
-      sendMessageToStudent(ctx, admin);
+      const groups = await Groups.findOne({
+        groupName: admin.subGroup.length ? admin.subGroup : admin.group,
+      });
+
+      sendMessageToStudent(ctx, groups);
+      await ctx.reply(message().messageSentIntoMainGroup);
     } else {
-      ctx.reply('Напиши своєму куратору 🤍');
+      ctx.reply(message().writeYourTeacher);
     }
   } catch (err) {
     if (err) console.log(err);
-    ctx.reply(
-      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
-    );
+    ctx.reply(message().error);
   }
 });
 

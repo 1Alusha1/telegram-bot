@@ -1,9 +1,10 @@
 import { Scenes, Markup } from 'telegraf';
 import setAdminSubGroup from '../use/setAdminSubGroup.js';
 import setAdminGroup from '../use/setAdminGroup.js';
-import setName from '../use/setName.js';
 
-const GenSetGroupTeacherState = {
+import message from '../message.js';
+
+const state = {
   groupName: '',
   teacherUsername: '',
   subGroupName: '',
@@ -12,10 +13,9 @@ const GenSetGroupTeacherState = {
 };
 
 export function setGroupTeacher() {
-  try {
-    const setGroupTeacher = new Scenes.BaseScene('setGroupTeacher');
-
-    setGroupTeacher.enter(async (ctx) => {
+  const setGroupTeacher = new Scenes.BaseScene('setGroupTeacher');
+  setGroupTeacher.enter(async (ctx) => {
+    try {
       const buttons = [
         Markup.button.callback('Додати у підгрупу', 'subgroup'),
         Markup.button.callback('Додати у группу', 'group'),
@@ -24,89 +24,102 @@ export function setGroupTeacher() {
         '<b>Можливі дії</b>',
         Markup.inlineKeyboard([buttons])
       );
-    });
+    } catch (err) {
+      if (err) console.log(err);
+      ctx.reply(message().error);
+    }
+  });
 
-    setGroupTeacher.action('group', async (ctx) => {
-      GenSetGroupTeacherState.action = 'group';
-      ctx.scene.enter('setGroupName');
-    });
-    setGroupTeacher.action('subgroup', async (ctx) => {
-      GenSetGroupTeacherState.subGroup = true;
-      GenSetGroupTeacherState.action = 'subgroup';
-      return await ctx.scene.enter('setGroupName');
-    });
+  setGroupTeacher.action('group', async (ctx) => {
+    state.action = 'group';
+    ctx.scene.enter('setGroupName');
+  });
+  setGroupTeacher.action('subgroup', async (ctx) => {
+    state.subGroup = true;
+    state.action = 'subgroup';
+    return await ctx.scene.enter('setGroupName');
+  });
 
-    return setGroupTeacher;
-  } catch (err) {
-    if (err) console.log(err);
-    ctx.reply(
-      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
-    );
-  }
+  return setGroupTeacher;
 }
 
 export function setGroupName() {
-  try {
-    const setGroupName = new Scenes.BaseScene('setGroupName');
-    setGroupName.enter(async (ctx) => {
-      await ctx.reply(
-        'Введіть назву групи в якій потрібно створити  Викладача'
-      );
-    });
-    setName(setGroupName, GenSetGroupTeacherState);
+  const setGroupName = new Scenes.BaseScene('setGroupName');
+  setGroupName.enter(async (ctx) => {
+    try {
+      await ctx.reply(message().enterNameNewGroup);
+      setName(setGroupName, state);
+    } catch (err) {
+      if (err) console.log(err);
+      ctx.reply(message().error);
+    }
+  });
 
-    return setGroupName;
-  } catch (err) {
-    if (err) console.log(err);
-    ctx.reply(
-      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
-    );
-  }
+  return setGroupName;
 }
 
 export function setSubGroupName() {
-  try {
-    const setSubGroupName = new Scenes.BaseScene('setSubGroupName');
-    setSubGroupName.enter(async (ctx) => {
-      await ctx.reply('Введіть назву підгруппи в яку потріно додати Викладача');
-    });
-    setName(setSubGroupName, GenSetGroupTeacherState);
-    return setSubGroupName;
-  } catch (err) {
-    if (err) console.log(err);
-    ctx.reply(
-      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
-    );
-  }
+  const setSubGroupName = new Scenes.BaseScene('setSubGroupName');
+  setSubGroupName.enter(async (ctx) => {
+    try {
+      await ctx.reply(message().enterNameNewSubGroup);
+      setName(setSubGroupName, state);
+    } catch (err) {
+      if (err) console.log(err);
+      ctx.reply(message().error);
+    }
+  });
+  return setSubGroupName;
 }
 
 export function setTeacherUsername() {
-  try {
-    const teacherUsername = new Scenes.BaseScene('setTeacherUsername');
+  const teacherUsername = new Scenes.BaseScene('setTeacherUsername');
 
-    teacherUsername.enter(async (ctx) => {
-      await ctx.reply(`Введіть username з телеграму викладача `);
-    });
+  teacherUsername.enter(async (ctx) => {
+    await ctx.reply(message().enterUsernameTeacher);
+  });
 
-    teacherUsername.on('text', async (ctx) => {
-      GenSetGroupTeacherState.teacherUsername = String(ctx.message.text);
+  teacherUsername.on('text', async (ctx) => {
+    try {
+      state.teacherUsername = String(ctx.message.text);
 
-      if (GenSetGroupTeacherState.teacherUsername) {
-        await ctx.reply(
-          `Вы обрали Выкладача ${GenSetGroupTeacherState.teacherUsername}`
-        );
+      if (state.teacherUsername) {
+        await ctx.reply(message(state.teacherUsername).teacherChoosed);
 
-        (await GenSetGroupTeacherState.subGroup)
-          ? await setAdminSubGroup(ctx, GenSetGroupTeacherState)
-          : await setAdminGroup(ctx, GenSetGroupTeacherState);
+        (await state.subGroup)
+          ? await setAdminSubGroup(ctx, state)
+          : await setAdminGroup(ctx, state);
         await ctx.scene.leave();
       }
-    });
-    return teacherUsername;
-  } catch (err) {
-    if (err) console.log(err);
-    ctx.reply(
-      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
-    );
-  }
+    } catch (err) {
+      if (err) console.log(err);
+      ctx.reply(message().error);
+    }
+  });
+  return teacherUsername;
+}
+
+function setName(scene, state) {
+  scene.on('text', async (ctx) => {
+    try {
+      if (state.action === 'subgroup' && state.subGroup) {
+        state.groupName = String(ctx.message.text);
+        await ctx.reply(message(String(ctx.message.text)).groupChoosed);
+        await ctx.scene.enter('setSubGroupName');
+        state.subGroup = false;
+      } else if (state.action === 'subgroup' && !state.subGroup) {
+        state.subGroupName = String(ctx.message.text);
+        await ctx.reply(message(String(ctx.message.text)).subGroupChoosed);
+        await ctx.scene.enter('setTeacherUsername');
+        state.subGroup = true;
+      } else if (state.action === 'group' && !state.subGroup) {
+        state.groupName = String(ctx.message.text);
+        await ctx.reply(message(String(ctx.message.text)).groupChoosed);
+        await ctx.scene.enter('setTeacherUsername');
+      }
+    } catch (err) {
+      if (err) console.log(err);
+      ctx.reply(message().error);
+    }
+  });
 }

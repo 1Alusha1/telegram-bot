@@ -13,8 +13,5 @@ export default async function checksMainGroups(state) {
     }
   } catch (err) {
     if (err) console.log(err);
-    ctx.reply(
-      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
-    );
   }
 }

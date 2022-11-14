@@ -1,8 +1,9 @@
 import checksMainGroups from './checksMainGroups.js';
-import verificationOfCreatedGroups from './verificationOfCreatedGroups.js';
 import Groups from '../model/Groups.js';
 import Admin from '../model/Admin.js';
+import MainGroup from '../model/MainGroup.js';
 
+import message from '../message.js';
 export default async function setAdminSubGroup(ctx, state) {
   try {
     //створює запис в у моделі основних груп
@@ -33,9 +34,8 @@ export default async function setAdminSubGroup(ctx, state) {
       }).save();
     }
     await ctx.reply(
-      `Викладач ${state.teacherUsername} закріпленний за групою ${state.groupName}
-та підгрупою ${state.subGroupName}
-Всі наступні повідомлння будуть відправлятися учням`
+      message(state.teacherUsername, state.groupName, state.subGroupName)
+        .setAdminSubGroup
     );
 
     state.groupName = '';
@@ -45,8 +45,34 @@ export default async function setAdminSubGroup(ctx, state) {
     state.action = '';
   } catch (err) {
     if (err) console.log(err);
-    ctx.reply(
-      'Somthings wrong. you can write me and i`wll help you! telegram: @ellisiam'
-    );
+    ctx.reply(message().error);
+  }
+}
+
+async function verificationOfCreatedGroups(state) {
+  try {
+    const mainGroup = await MainGroup({
+      groupName: state.groupName,
+    });
+    const isSubGorup = mainGroup.subGroup.filter((subGroup) => {
+      return subGroup.groupName === state.subGroupName ? subGroup : false;
+    });
+    if (!isSubGorup.length) {
+      MainGroup.findOneAndUpdate(
+        {
+          groupName: state.groupName,
+        },
+        {
+          $push: {
+            subGroup: { groupName: state.subGroupName },
+          },
+        },
+        (err) => {
+          if (err) console.log(err);
+        }
+      );
+    }
+  } catch (err) {
+    if (err) console.log(err);
   }
 }
