@@ -42,13 +42,13 @@ async function createStudentInGroup(groupName, ctx) {
         console.log(err);
       }
     );
-    await ctx.reply(message().connectToGroup);
 
     new Student({
-      id: ctx.update.callback_query.from.id,
-      username: ctx.update.callback_query.from.first_name,
+      id,
+      username,
       group: groupName,
     }).save();
+    await ctx.reply(message(groupName).connectedToGroup);
 
     await ctx.scene.leave();
   } catch (err) {

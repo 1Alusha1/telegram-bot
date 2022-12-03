@@ -49,7 +49,6 @@ bot.start(async (ctx) => {
       if (admin.group.length && admin.subGroup.length) {
         return ctx.reply(message(admin.group, admin.subGroup).adminSubGroup);
       } else {
-        console.log();
         return ctx.reply(message(admin.group).adminGroup);
       }
     }
@@ -75,7 +74,7 @@ bot.command('/admin', async (ctx) => {
   }
 
   try {
-    if (admin.username !== 'ellisiam') {
+    if (admin.username !== process.env.MAIN_ADMIN) {
       await ctx.reply(
         'Доступні команди',
         Markup.keyboard([['Написати у групу', 'Створити власну підгрупу']])
@@ -85,7 +84,7 @@ bot.command('/admin', async (ctx) => {
     } else {
       await ctx.reply(
         'Доступні команди',
-        Markup.keyboard([['Створити групу адміна', 'Створити власну підгрупу']])
+        Markup.keyboard([['Створити групу адміна', 'Створити власну підгрупу','Написати у групу']])
           .oneTime()
           .resize()
       );
@@ -104,7 +103,7 @@ bot.hears('Написати у групу', async (ctx) => {
   writeIntoOwnGroup(bot, ctx);
 });
 
-bot.hears('Створити підгрупу', async (ctx) => {
+bot.hears('Створити власну підгрупу', async (ctx) => {
   ctx.scene.enter('createAdminOwnGroup');
 });
 

@@ -18,7 +18,7 @@ export function setGroupTeacher() {
     try {
       const buttons = [
         Markup.button.callback('Додати у підгрупу', 'subgroup'),
-        Markup.button.callback('Додати у группу', 'group'),
+        Markup.button.callback('Додати у групу', 'group'),
       ];
       await ctx.replyWithHTML(
         '<b>Можливі дії</b>',

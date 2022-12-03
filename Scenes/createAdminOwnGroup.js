@@ -14,6 +14,7 @@ export function createAdminOwnGroup() {
 
   createAdminOwnGroup.on('text', async (ctx) => {
     let groupName = String(ctx.message.text);
+    const username = ctx.message.from.username;
 
     new MainGroup({
       groupName,
@@ -26,7 +27,7 @@ export function createAdminOwnGroup() {
     }).save();
 
     Admin.findOneAndUpdate(
-      { groupName },
+      { username },
       {
         $push: { ownGroups: { groupName } },
       },
@@ -35,7 +36,7 @@ export function createAdminOwnGroup() {
         if (err) console.log(err);
       }
     );
-    await ctx.reply(message().ownGroupCreated);
+    await ctx.reply(message(groupName).ownGroupCreated);
     await ctx.scene.leave();
   });
   return createAdminOwnGroup;
