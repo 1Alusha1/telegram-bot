@@ -77,14 +77,20 @@ bot.command('/admin', async (ctx) => {
     if (admin.username !== process.env.MAIN_ADMIN) {
       await ctx.reply(
         'Доступні команди',
-        Markup.keyboard([['Написати у групу', 'Створити власну підгрупу']])
+        Markup.keyboard([['Написати у групу']])
           .oneTime()
           .resize()
       );
     } else {
       await ctx.reply(
         'Доступні команди',
-        Markup.keyboard([['Створити групу адміна', 'Створити власну підгрупу','Написати у групу']])
+        Markup.keyboard([
+          [
+            'Створити групу адміна',
+            'Створити власну підгрупу',
+            'Написати у групу',
+          ],
+        ])
           .oneTime()
           .resize()
       );
@@ -117,8 +123,12 @@ bot.on('text', async (ctx) => {
         groupName: admin.subGroup.length ? admin.subGroup : admin.group,
       });
 
-      sendMessageToStudent(ctx, groups);
-      await ctx.reply(message().messageSentIntoMainGroup);
+      if (groups.admin) {
+        writeIntoOwnGroup(bot, ctx);
+      } else {
+        sendMessageToStudent(ctx, groups);
+        await ctx.reply(message().messageSentIntoMainGroup);
+      }
     } else {
       ctx.reply(message().writeYourTeacher);
     }

@@ -15,7 +15,10 @@ export default async function sendMessageToStudent(ctx, group) {
     } else {
       groupName = state.groupName;
     }
-    console.log(groupName);
+    if (!group.students.length) {
+      return ctx.reply(message().noHaveStudents);
+    }
+
     group.students.forEach((student) => {
       ctx.telegram
         .sendMessage(String(student.student.id), ctx.message.text)

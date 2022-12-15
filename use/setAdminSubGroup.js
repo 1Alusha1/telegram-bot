@@ -19,6 +19,7 @@ export default async function setAdminSubGroup(ctx, state) {
     if (!groups) {
       await new Groups({
         groupName: state.subGroupName,
+        admin: state.teacherUsername,
       }).save();
     }
     //ствоюрєм адміна підгрупи
