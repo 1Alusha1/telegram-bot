@@ -6,6 +6,8 @@ import Student from './model/Student.js';
 import Groups from './model/Groups.js';
 
 import main from './mongoConnect.js';
+import axios from 'axios';
+import randomInt from './use/randomInt.js';
 
 import {
   setGroupTeacher,
@@ -77,7 +79,7 @@ bot.command('/admin', async (ctx) => {
     if (admin.username !== process.env.MAIN_ADMIN) {
       await ctx.reply(
         'Доступні команди',
-        Markup.keyboard([['Написати у групу']])
+        Markup.keyboard([['Написати у групу', 'Увійти']])
           .oneTime()
           .resize()
       );
@@ -85,11 +87,8 @@ bot.command('/admin', async (ctx) => {
       await ctx.reply(
         'Доступні команди',
         Markup.keyboard([
-          [
-            'Створити групу адміна',
-            'Створити власну підгрупу',
-            'Написати у групу',
-          ],
+          ['Створити групу адміна', 'Створити власну підгрупу'],
+          ['Написати у групу', 'Увійти'],
         ])
           .oneTime()
           .resize()
@@ -111,6 +110,30 @@ bot.hears('Написати у групу', async (ctx) => {
 
 bot.hears('Створити власну підгрупу', async (ctx) => {
   ctx.scene.enter('createAdminOwnGroup');
+});
+
+bot.hears('Увійти', async (ctx) => {
+  const username = ctx.message.from.username;
+  const admin = await Admin.findOne({ username });
+  let code = randomInt(5);
+
+  if (!admin) {
+    return ctx.reply('У вас немає доступу до цієї команди!');
+  }
+
+  try {
+    const res = await axios(`${process.env.API_URI}/auth/get-token`, {
+      method: 'post',
+      mode: 'no-cors',
+      headers: {
+        'content-type': 'application/json',
+      },
+      data: JSON.stringify({ _id: admin._id, username: admin.username, code }),
+    });
+    ctx.reply(message(code, res.data.message).authInfo);
+  } catch (err) {
+    if (err) console.log(err);
+  }
 });
 
 bot.on('text', async (ctx) => {
